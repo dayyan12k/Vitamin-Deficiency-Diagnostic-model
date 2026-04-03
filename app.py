@@ -192,8 +192,8 @@ def generate_pdf(prediction_class, confidence, symptoms, remedy_text):
         clean_remedy = remedy_text.encode('ascii', 'ignore').decode('ascii')
         pdf.multi_cell(0, 10, txt=clean_remedy)
         
-        # In fpdf2, output() without a name returns bytes directly
-        return pdf.output()
+        # In fpdf2, output() without a name returns a bytearray, wrap in bytes() for Streamlit
+        return bytes(pdf.output())
     except Exception as e:
         st.error(f"PDF Error: {e}")
         return None
