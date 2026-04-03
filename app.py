@@ -164,30 +164,39 @@ def get_remedy(prediction_class, symptoms):
         return f"Final Connection Error: {e}. Please ensure your API Key is correct and your region supports Gemini AI."
 
 def generate_pdf(prediction_class, confidence, symptoms, remedy_text):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(200, 10, txt="Vitamin Deficiency Detector Report", ln=True, align='C')
-    
-    pdf.ln(10)
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, txt=f"Top Prediction: {prediction_class}", ln=True)
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt=f"Confidence: {confidence:.2f}%", ln=True)
-    
-    pdf.ln(5)
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, txt="Symptoms Reported:", ln=True)
-    pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, txt=symptoms)
-    
-    pdf.ln(5)
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, txt="AI Recommended Remedies & Advice:", ln=True)
-    pdf.set_font("Arial", size=10)
-    pdf.multi_cell(0, 10, txt=remedy_text.encode('latin-1', 'replace').decode('latin-1'))
-    
-    return pdf.output(dest='S').encode('latin-1')
+    try:
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("helvetica", 'B', 16)
+        pdf.cell(200, 10, txt="Vitamin Deficiency Detector Report", ln=True, align='C')
+        
+        pdf.ln(10)
+        pdf.set_font("helvetica", 'B', 12)
+        pdf.cell(200, 10, txt=f"Top Prediction: {prediction_class}", ln=True)
+        pdf.set_font("helvetica", size=12)
+        pdf.cell(200, 10, txt=f"Confidence: {confidence:.2f}%", ln=True)
+        
+        pdf.ln(5)
+        pdf.set_font("helvetica", 'B', 12)
+        pdf.cell(200, 10, txt="Symptoms Reported:", ln=True)
+        pdf.set_font("helvetica", size=12)
+        # Clean text for PDF (remove characters that helvetica can't handle)
+        clean_symptoms = symptoms.encode('ascii', 'ignore').decode('ascii')
+        pdf.multi_cell(0, 10, txt=clean_symptoms)
+        
+        pdf.ln(5)
+        pdf.set_font("helvetica", 'B', 12)
+        pdf.cell(200, 10, txt="AI Recommended Remedies & Advice:", ln=True)
+        pdf.set_font("helvetica", size=10)
+        # Clean remedy text (remove emojis/special chars for standard fonts)
+        clean_remedy = remedy_text.encode('ascii', 'ignore').decode('ascii')
+        pdf.multi_cell(0, 10, txt=clean_remedy)
+        
+        # In fpdf2, output() without a name returns bytes directly
+        return pdf.output()
+    except Exception as e:
+        st.error(f"PDF Error: {e}")
+        return None
 
 # --- UI Layout ---
 
