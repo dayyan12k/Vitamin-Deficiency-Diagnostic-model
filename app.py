@@ -53,28 +53,42 @@ st.markdown("""
         border-radius: 10px;
     }
     .prediction-card {
-        background-color: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
+        background-color: #ffffff;
+        color: #212529 !important; /* Force dark text color */
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 10px;
+        border: 1px solid #dee2e6;
+    }
+    .prediction-card strong {
+        color: #212529 !important;
     }
     .highlight-top {
         border-left: 5px solid #28a745;
-        background-color: #f4fff4;
+        background-color: #f8fff9;
     }
     .confidence-high {
         color: #28a745;
         font-weight: bold;
+        background-color: #f8fff9;
+        padding: 5px;
+        border-radius: 5px;
     }
     .confidence-low {
         color: #dc3545;
         font-weight: bold;
+        background-color: #fff5f5;
+        padding: 5px;
+        border-radius: 5px;
     }
     .scroll-container {
-        max-height: 400px;
+        max-height: 450px;
         overflow-y: auto;
         padding: 10px;
+        border: 1px solid #eee;
+        border-radius: 10px;
+        background: #fafafa;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -112,8 +126,9 @@ def preprocess_image(image, target_size=(224, 224)):
     return img_array
 
 def get_remedy(prediction_class, symptoms):
-    model_gemini = genai.GenerativeModel('gemini-1.5-flash')
-    prompt = f"""
+    try:
+        model_gemini = genai.GenerativeModel('gemini-1.5-flash')
+        prompt = f"""
     A user has been predicted to have {prediction_class} based on a skin image analysis.
     The user also reports the following symptoms: {symptoms}
 
@@ -125,11 +140,16 @@ def get_remedy(prediction_class, symptoms):
 
     Note: This is an AI-generated suggestion, not medical advice.
     """
-    try:
         response = model_gemini.generate_content(prompt)
         return response.text
     except Exception as e:
-        return f"Error connecting to AI: {e}"
+        # Fallback to gemini-pro if flash fails
+        try:
+            model_fallback = genai.GenerativeModel('gemini-1.5-pro')
+            response = model_fallback.generate_content(prompt)
+            return response.text
+        except:
+            return f"Error connecting to AI: {e}. Please check your API key or model availability."
 
 def generate_pdf(prediction_class, confidence, symptoms, remedy_text):
     pdf = FPDF()
@@ -234,13 +254,15 @@ with col2:
                             
                             st.markdown(f"""
                             <div class="{card_class}">
-                                <div style="display: flex; justify-content: space-between;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                                     <strong>{res['class']}</strong>
-                                    <span>{res['prob']:.1f}%</span>
+                                    <span style="color: #212529;">{res['prob']:.1f}%</span>
+                                </div>
+                                <div style="width: 100%; background-color: #e9ecef; border-radius: 5px; height: 10px;">
+                                    <div style="width: {res['prob']}%; background-color: {'#28a745' if is_top else '#007bff'}; height: 10px; border-radius: 5px;"></div>
                                 </div>
                             </div>
                             """, unsafe_allow_html=True)
-                            st.progress(res['prob'] / 100.0)
                         st.markdown('</div>', unsafe_allow_html=True)
                     
                     # 3. Confidence Logic
