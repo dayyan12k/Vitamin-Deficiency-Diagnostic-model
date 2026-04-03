@@ -2,5 +2,6 @@ streamlit
 tensorflow-cpu
 pillow
 google-generativeai>=0.5.0
-fpdf2
+pymupdf
 numpy<2.0.0
+markdown
