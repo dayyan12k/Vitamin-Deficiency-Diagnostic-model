@@ -177,7 +177,7 @@ with col1:
     uploaded_file = st.file_uploader("Choose a skin image...", type=["jpg", "png", "jpeg"])
     
     if uploaded_file is not None:
-        image = Image.open(uploaded_file)
+        image = Image.open(uploaded_file).convert('RGB')
         st.image(image, caption="Uploaded Image", use_container_width=True)
         
     symptoms = st.text_area("✍️ Enter your symptoms (e.g., fatigue, mouth sores, dry skin):", placeholder="Describe how you feel...")
