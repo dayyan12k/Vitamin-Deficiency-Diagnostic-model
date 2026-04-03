@@ -98,11 +98,11 @@ def load_vitamin_model():
         st.warning(f"Model file '{MODEL_PATH}' not found. Using **Simulation Mode**.")
         return "SIMULATION_MODE"
 
-def preprocess_image(image):
+def preprocess_image(image, target_size=(224, 224)):
     if not HAS_TENSORFLOW:
         return None
-    # Resize to 128x128
-    img = image.resize((128, 128))
+    # Resize to target size (detected from model)
+    img = image.resize(target_size)
     # Convert to array
     img_array = tf.keras.preprocessing.image.img_to_array(img)
     # Expand dimensions for batch
@@ -205,7 +205,15 @@ with col2:
                         predictions = [p/total for p in probs]
                     else:
                         # Real Prediction logic
-                        processed_img = preprocess_image(image)
+                        # Detect expected input size (e.g., 224, 224)
+                        try:
+                            input_shape = model.input_shape
+                            # input_shape is usually (None, Height, Width, Channels)
+                            target_h, target_w = input_shape[1], input_shape[2]
+                        except:
+                            target_h, target_w = 224, 224 # Default fallback
+                            
+                        processed_img = preprocess_image(image, target_size=(target_w, target_h))
                         predictions = model.predict(processed_img)[0]
                     
                     # Sort results
