@@ -126,9 +126,8 @@ def preprocess_image(image, target_size=(224, 224)):
     return img_array
 
 def get_remedy(prediction_class, symptoms):
-    try:
-        model_gemini = genai.GenerativeModel('gemini-1.5-flash')
-        prompt = f"""
+    # Prompt Template
+    prompt = f"""
     A user has been predicted to have {prediction_class} based on a skin image analysis.
     The user also reports the following symptoms: {symptoms}
 
@@ -140,16 +139,21 @@ def get_remedy(prediction_class, symptoms):
 
     Note: This is an AI-generated suggestion, not medical advice.
     """
-        response = model_gemini.generate_content(prompt)
-        return response.text
-    except Exception as e:
-        # Fallback to gemini-pro if flash fails
+    
+    # Try multiple models in order of availability/performance
+    models_to_try = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
+    
+    last_error = None
+    for model_name in models_to_try:
         try:
-            model_fallback = genai.GenerativeModel('gemini-1.5-pro')
-            response = model_fallback.generate_content(prompt)
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(prompt)
             return response.text
-        except:
-            return f"Error connecting to AI: {e}. Please check your API key or model availability."
+        except Exception as e:
+            last_error = e
+            continue
+            
+    return f"Error connecting to AI after trying multiple models. Last error: {last_error}. Please check your API key and region availability."
 
 def generate_pdf(prediction_class, confidence, symptoms, remedy_text):
     pdf = FPDF()

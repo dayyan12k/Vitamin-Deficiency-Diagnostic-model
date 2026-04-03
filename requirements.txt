@@ -1,6 +1,6 @@
 streamlit
 tensorflow-cpu
 pillow
-google-generativeai
+google-generativeai>=0.5.0
 fpdf2
 numpy<2.0.0
