@@ -140,20 +140,28 @@ def get_remedy(prediction_class, symptoms):
     Note: This is an AI-generated suggestion, not medical advice.
     """
     
-    # Try multiple models in order of availability/performance
-    models_to_try = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
-    
-    last_error = None
-    for model_name in models_to_try:
-        try:
-            model = genai.GenerativeModel(model_name)
-            response = model.generate_content(prompt)
-            return response.text
-        except Exception as e:
-            last_error = e
-            continue
+    try:
+        # First, try to list models and find one that supports 'generateContent'
+        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        
+        if not available_models:
+            return "No generative models found for this API key. Please check your Google AI Studio account."
             
-    return f"Error connecting to AI after trying multiple models. Last error: {last_error}. Please check your API key and region availability."
+        # Prioritize 1.5 models if available
+        preferred_order = ['models/gemini-1.5-flash', 'models/gemini-1.5-pro', 'models/gemini-pro']
+        model_to_use = available_models[0] # Default to first one found
+        
+        for p in preferred_order:
+            if p in available_models:
+                model_to_use = p
+                break
+                
+        model = genai.GenerativeModel(model_to_use)
+        response = model.generate_content(prompt)
+        return response.text
+        
+    except Exception as e:
+        return f"Final Connection Error: {e}. Please ensure your API Key is correct and your region supports Gemini AI."
 
 def generate_pdf(prediction_class, confidence, symptoms, remedy_text):
     pdf = FPDF()
